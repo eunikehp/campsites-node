@@ -11,8 +11,6 @@ const campsiteRouter = require('./routes/campsiteRouter');
 const promotionRouter = require('./routes/promotionRouter');
 const partnerRouter = require('./routes/partnerRouter');
 
-
-
 var app = express();
 
 // view engine setup
@@ -23,6 +21,32 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+
+// we'll add authentication
+function auth(req, res, next) {
+  // show the authorization header
+  console.log(req.headers);
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    const err = new Error('You are not authenticated!');
+    res.setHeader('WWW-Authenticate', 'Basic');
+    err.status = 401;
+    return next(err);
+  }
+  //parse the auth header and validate username and password
+  const auth= Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':'); //decode username and password
+  const user = auth[0]; //grab the username
+  const pass= auth[1]; //grab the password
+  if (user === 'admin' && pass === 'password') {
+    return next(); //authorized
+  } else {
+    const err = new Error('You are not authenticated!');
+    res.setHeader('WWW-Authenticate', 'Basic');
+    err.status = 401;
+    return next(err);
+  }
+}
+app.use(auth);
 app.use(express.static(path.join(__dirname, 'public')));
 
 //calls
@@ -48,6 +72,7 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
+//MONGOOSE
 const mongoose = require('mongoose');
 
 const url = 'mongodb://localhost:27017/nucampsite';
