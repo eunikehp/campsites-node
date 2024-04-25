@@ -32,6 +32,9 @@ app.use(session({
   store: new FileStore() //used to save session information to the server's hard disk
 }));
 
+app.use('/', indexRouter);
+app.use('/users', usersRouter);
+
 // we'll add authentication
 function auth(req, res, next) {
   // show the authorization header
@@ -39,30 +42,31 @@ function auth(req, res, next) {
   console.log(req.session);
   // if (!req.signedCookies.user) {
   if (!req.session.user) {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
+    // const authHeader = req.headers.authorization; //deleted ,cause it handled by user Router
+    // if (!authHeader) {
       const err = new Error('You are not authenticated!');
-      res.setHeader('WWW-Authenticate', 'Basic');
+      // res.setHeader('WWW-Authenticate', 'Basic'); //deleted ,cause it handled by user Router
       err.status = 401;
       return next(err);
-    }
+    // }
     //parse the auth header and validate username and password
-    const auth= Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':'); //decode username and password
-    const user = auth[0]; //grab the username
-    const pass= auth[1]; //grab the password
-    if (user === 'admin' && pass === 'password') {
-      // res.cookie('user', 'admin', {signed: true});// set up a cookie
-      req.session.user = 'admin';
-      return next(); //authorized
-    } else {
-      const err = new Error('You are not authenticated!');
-      res.setHeader('WWW-Authenticate', 'Basic');
-      err.status = 401;
-      return next(err);
-    }
+    // const auth= Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':'); //decode username and password
+    // const user = auth[0]; //grab the username
+    // const pass= auth[1]; //grab the password
+    // if (user === 'admin' && pass === 'password') {
+    //   // res.cookie('user', 'admin', {signed: true});// set up a cookie
+    //   req.session.user = 'admin';
+    //   return next(); //authorized
+    // } else {
+    //   const err = new Error('You are not authenticated!');
+    //   res.setHeader('WWW-Authenticate', 'Basic');
+    //   err.status = 401;
+    //   return next(err);
+    // }
   } else {
       // if (req.signedCookies.user === 'admin') {
-      if (req.session.user === 'admin') {
+      // if (req.session.user === 'admin') {
+      if (req.session.user === 'authenticated') { //same as users.js line 59
         return next();
       } else {
           const err = new Error('You are not authenticated!');
@@ -75,8 +79,6 @@ app.use(auth);
 app.use(express.static(path.join(__dirname, 'public')));
 
 //calls
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
 app.use('/campsites', campsiteRouter);
 app.use('/promotions', promotionRouter);
 app.use('/partners', partnerRouter);
